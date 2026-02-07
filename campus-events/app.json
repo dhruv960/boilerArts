@@ -2,7 +2,8 @@
   "expo": {
     "name": "campus-events",
     "slug": "campus-events",
-    "version": "1.0.0",
+    "scheme": "campus-events",
+	"version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

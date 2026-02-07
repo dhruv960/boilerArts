@@ -21,7 +21,7 @@ export default function SignUpScreen({ navigation, onSignUp }) {
   });
   const [error, setError] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError('');
 
     if (!formData.firstName || !formData.lastName || !formData.email || 
@@ -39,9 +39,11 @@ export default function SignUpScreen({ navigation, onSignUp }) {
       setError('Password must be at least 6 characters');
       return;
     }
-
-    onSignUp(formData);
-    navigation.navigate('Hobbies');
+	console.log("signing up now");
+    const result = await onSignUp(formData.email, formData.password, formData.username, formData.firstName, formData.lastName);
+    if (result.success) {
+		  navigation.navigate('Hobbies');
+	}
   };
 
   return (

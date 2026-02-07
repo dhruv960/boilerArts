@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 
 admin.initializeApp(); // Initialize Firebase Admin SDK
 const db = admin.firestore();
-
+const auth = admin.auth();
 //sign up function
 exports.signUp = functions.https.onCall(async (data, context) => {
   const { email, password, name } = data;
@@ -29,7 +29,8 @@ exports.signUp = functions.https.onCall(async (data, context) => {
       email,
       stars: 0,
       badge: [],
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      hobbies: [],
+	  createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
     return { message: "User created successfully", uid: userRecord.uid };

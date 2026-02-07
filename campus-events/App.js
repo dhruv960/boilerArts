@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import { AppRegistry } from 'react-native';
 // Screens
 import SignUpScreen from './screens/SignUpScreen';
 import HobbiesScreen from './screens/HobbiesScreen';
@@ -20,11 +28,32 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [needsHobbies, setNeedsHobbies] = useState(false);
   const [lastActivityStars, setLastActivityStars] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await loadUserData(user.uid);
+      } else {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+      }
+      setLoading(false);
+    });
 
+    return unsubscribe;
+  }, []);
+  const loadUserData = async (uid) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (userDoc.exists()) {
+        setCurrentUser({ uid, ...userDoc.data() });
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
   const checkAuth = async () => {
     try {
       const userJson = await AsyncStorage.getItem('currentUser');
@@ -38,88 +67,112 @@ export default function App() {
     }
   };
 
-  const handleSignUp = async (userData) => {
+  const handleSignUp = async (email, password, username, firstName, lastName) => {
     try {
-      const user = {
-        ...userData,
-        joinDate: new Date().toISOString()
-      };
-      
-      await AsyncStorage.setItem('currentUser', JSON.stringify(user));
-      await AsyncStorage.setItem(`activities_${userData.username}`, JSON.stringify([]));
-      await AsyncStorage.setItem(`badges_${userData.username}`, JSON.stringify([]));
-      
-      setCurrentUser(user);
-      setNeedsHobbies(true);
+      // Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+	  console.log("Into sign up function");      
+      // Create Firestore user document
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+
+        username,
+        email,
+		firstName,
+		lastName,
+        stars: 0,
+        badges: [],
+        createdAt: new Date(),
+      	hobbies: []
+	  });
+
+	console.log("done the sign up");
+
+      return { success: true };
     } catch (error) {
-      console.error('Error signing up:', error);
+      return { success: false, error: error.message };
     }
   };
 
   const handleHobbiesComplete = async (hobbies) => {
     try {
-      const updatedUser = { ...currentUser, hobbies };
-      await AsyncStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      setCurrentUser(updatedUser);
-      setIsAuthenticated(true);
-      setNeedsHobbies(false);
-    } catch (error) {
-      console.error('Error saving hobbies:', error);
-    }
+    console.log('Saving hobbies:', hobbies);
+    
+    // Update Firestore with hobbies
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      hobbies: hobbies
+    });
+    
+    console.log('Hobbies saved to Firestore');
+    
+    // Update local state
+    const updatedUser = { ...currentUser, hobbies };
+    setCurrentUser(updatedUser);
+    setIsAuthenticated(true);
+    setNeedsHobbies(false);
+  } catch (error) {
+    console.error('Error saving hobbies:', error);
+  }
   };
 
   const handleLogin = async (username, password) => {
     try {
-      const userJson = await AsyncStorage.getItem('currentUser');
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        if (user.username === username) {
-          setCurrentUser(user);
-          setIsAuthenticated(true);
-          return true;
-        }
-      }
-      return false;
+      await signInWithEmailAndPassword(auth, email, password);
+      return { success: true };
     } catch (error) {
-      console.error('Error logging in:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   };
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('currentUser');
-      setIsAuthenticated(false);
-      setCurrentUser(null);
+      await signOut(auth);
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
   const handleActivityLogged = async (activityName, timeSpent) => {
-    try {
-      const stars = Math.floor(timeSpent / 30);
-      
-      const activity = {
-        id: Date.now(),
-        name: activityName,
-        timeSpent: timeSpent,
-        stars: stars,
-        date: new Date().toISOString()
-      };
-
-      const activitiesJson = await AsyncStorage.getItem(`activities_${currentUser.username}`);
-      const activities = activitiesJson ? JSON.parse(activitiesJson) : [];
-      activities.push(activity);
-      
-      await AsyncStorage.setItem(`activities_${currentUser.username}`, JSON.stringify(activities));
-      setLastActivityStars(stars);
-
-      // Check badges
-      await checkBadges(activities);
-    } catch (error) {
-      console.error('Error logging activity:', error);
-    }
+     try {
+    console.log('Logging activity:', activityName, timeSpent);
+    
+    const stars = Math.floor(timeSpent / 30);
+    
+    // Create the new activity object
+    const newActivity = {
+      name: activityName,
+      timeSpent: timeSpent,
+      stars: stars,
+      createdAt: new Date().toISOString() // timestamp as string
+    };
+    
+    // Get current activities array (or empty array if none)
+    const currentActivities = currentUser.activities || [];
+    console.log("fetched current user actiovities");  
+    // Add new activity to the array
+    const updatedActivities = [...currentActivities, newActivity];
+    console.log("added new activity to list");
+    // Update Firestore - add to activities array AND update stars
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      activities: updatedActivities,
+      stars: (currentUser.stars || 0) + stars
+    });
+    
+    console.log('Activity and stars updated in Firestore');
+    
+    // Update local state
+    setCurrentUser({ 
+      ...currentUser, 
+      activities: updatedActivities,
+      stars: (currentUser.stars || 0) + stars 
+    });
+    
+    setLastActivityStars(stars);
+    
+    return { success: true, stars };
+  } catch (error) {
+    console.error('Error logging activity:', error);
+    return { success: false, error: error.message };
+  }
   };
 
   const checkBadges = async (activities) => {
@@ -192,3 +245,5 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
+AppRegistry.registerComponent('main', () => App);
