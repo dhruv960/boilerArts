@@ -37,6 +37,8 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+#api-key
+firebase.js
 
 # generated native folders
 /ios
