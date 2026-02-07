@@ -1,7 +1,4 @@
-import { auth, db } from './firebase'
-
-console.log(auth)  // should print Firebase Auth object
-console.log(db)  {
+ {
   "expo": {
     "name": "campus-events",
     "slug": "campus-events",
