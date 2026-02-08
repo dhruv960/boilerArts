@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNav from '../components/BottomNav';
-
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 const BADGES = [
   {
     id: 'first-activity',
@@ -46,24 +47,60 @@ const BADGES = [
 export default function ProfileScreen({ user, onLogout }) {
   const [badges, setBadges] = useState([]);
   const [totalStars, setTotalStars] = useState(0);
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     loadProfile();
   }, []);
 
   const loadProfile = async () => {
     try {
-      const badgesJson = await AsyncStorage.getItem(`badges_${user.username}`);
-      const userBadges = badgesJson ? JSON.parse(badgesJson) : [];
-      setBadges(userBadges);
+      setLoading(true);
+      
+      // Fetch user document from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (!userDoc.exists()) {
+        console.log('User document not found');
+        setLoading(false);
+        return;
+      }
+      
+      const userData = userDoc.data();
+      
+      // Get total stars
+      setTotalStars(userData.stars || 0);
+      
+      // Get badge names from user document
+      const userBadgeNames = userData.badges || [];
+      console.log('User badge names:', userBadgeNames);
+      
+      if (userBadgeNames.length === 0) {
+        setBadges([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch full badge details from badges collection
+       const q = query(
+    collection(db, "badges"),
+    where("name", "in", userBadgeNames)
+  );
 
-      const activitiesJson = await AsyncStorage.getItem(`activities_${user.username}`);
-      const activities = activitiesJson ? JSON.parse(activitiesJson) : [];
-      const stars = activities.reduce((sum, activity) => sum + activity.stars, 0);
-      setTotalStars(stars);
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    }
+  const snapshot = await getDocs(q);
+
+  const badgeDetails = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+    
+    console.log('Badge details:', badgeDetails);
+    setBadges(badgeDetails);
+    
+  } catch (error) {
+    console.error('Error loading profile:', error);
+  } finally {
+    setLoading(false);
+  }
   };
 
   const isBadgeEarned = (badgeId) => badges.includes(badgeId);
@@ -104,14 +141,14 @@ export default function ProfileScreen({ user, onLogout }) {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Badges</Text>
-            {BADGES.map((badge) => {
+            {badges.map((badge) => {
               const earned = isBadgeEarned(badge.id);
               return (
                 <View
                   key={badge.id}
-                  style={[styles.badgeCard, earned && styles.badgeEarned]}
+                  style={[styles.badgeCard, true && styles.badgeEarned]}
                 >
-                  <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
+                  <Text style={styles.badgeIcon}>{badge.icon}</Text>
                   <View style={styles.badgeInfo}>
                     <Text style={styles.badgeName}>{badge.name}</Text>
                     <Text style={styles.badgeDescription}>{badge.description}</Text>

@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
   signOut
 } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { AppRegistry } from 'react-native';
@@ -144,7 +145,24 @@ export default function App() {
       stars: stars,
       createdAt: new Date().toISOString() // timestamp as string
     };
-    
+	const q = query(
+      collection(db, "badges")    );
+   
+    const snapshot = await getDocs(q);
+			 const badgesSnap = snapshot;
+
+  const earnedBadges = currentUser.badges || [];
+	badgesSnap.forEach(badgeDoc => {
+    const badge = badgeDoc.data();
+
+    if (
+      stars + (currentUser.stars || 0) >= badge.stars &&
+      !earnedBadges.includes(badge.name)
+    ) {
+      earnedBadges.push(badge.name);
+    }
+  });
+
     // Get current activities array (or empty array if none)
     const currentActivities = currentUser.activities || [];
     console.log("fetched current user actiovities");  
@@ -154,8 +172,9 @@ export default function App() {
     // Update Firestore - add to activities array AND update stars
     await updateDoc(doc(db, 'users', currentUser.uid), {
       activities: updatedActivities,
-      stars: (currentUser.stars || 0) + stars
-    });
+      stars: (currentUser.stars || 0) + stars,
+	  badges: earnedBadges
+	});
     
     console.log('Activity and stars updated in Firestore');
     
