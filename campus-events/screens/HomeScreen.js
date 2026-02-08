@@ -1,3 +1,6 @@
+
+import { doc, collection, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebase'; // Adjust path if needed
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -36,11 +39,14 @@ const SAMPLE_EVENTS = [
 
 export default function HomeScreen({ user }) {
   const [starsThisWeek, setStarsThisWeek] = useState(0);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   
   useEffect(() => {
     loadStars();
+    fetchEvents();
 
     // Fade in animation
     Animated.parallel([
@@ -56,25 +62,57 @@ export default function HomeScreen({ user }) {
       }),
     ]).start();
   }, []);
-
+  const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const eventsRef = collection(db, 'events');
+        const q = query(eventsRef, orderBy('date', 'asc')); // Sort by date
+        
+        const querySnapshot = await getDocs(q);
+        const eventsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        setEvents(eventsData);
+        console.log('Fetched events:', eventsData);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      } finally {
+        setLoading(false);
+      }
+   }; 
   const loadStars = async () => {
     try {
-      const activitiesJson = await AsyncStorage.getItem(`activities_${user.username}`);
-      const activities = activitiesJson ? JSON.parse(activitiesJson) : [];
-
-      const now = new Date();
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      const weeklyStars = activities
-        .filter((activity) => new Date(activity.date) >= startOfWeek)
-        .reduce((sum, activity) => sum + activity.stars, 0);
-
-      setStarsThisWeek(weeklyStars);
-    } catch (error) {
-      console.error('Error loading stars:', error);
+    // Get activities array from Firestore user document
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    
+    if (!userDoc.exists()) {
+      console.log('User document not found');
+      return;
     }
+    
+    const userData = userDoc.data();
+    const activities = userData.activities || [];
+    
+    console.log('Loaded activities from Firebase:', activities);
+     const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+     // Filter activities from this week and sum stars
+    const weeklyStars = activities
+      .filter((activity) => {
+        const activityDate = new Date(activity.createdAt);
+        return activityDate >= startOfWeek;
+      })
+      .reduce((sum, activity) => sum + (activity.stars || 0), 0);
+      console.log('Stars this week:', weeklyStars);
+    setStarsThisWeek(weeklyStars);
+  } catch (error) {
+    console.error('Error loading stars:', error);
+  }
+
   };
 
   return (
@@ -102,7 +140,7 @@ export default function HomeScreen({ user }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upcoming Events</Text>
 
-            {SAMPLE_EVENTS.map((event) => (
+            {events.map((event) => (
               <View key={event.id} style={styles.eventBox}>
                 <Text style={styles.eventIcon}>{event.icon}</Text>
                 <View style={styles.eventContent}>

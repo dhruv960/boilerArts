@@ -160,7 +160,7 @@ export default function ProfileScreen({ user, onLogout }) {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Badges</Text>
-            {BADGES.map((badge) => {
+            {badges.map((badge) => {
               const earned = isBadgeEarned(badge.id);
               return (
                 <View
