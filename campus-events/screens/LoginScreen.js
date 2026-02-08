@@ -7,8 +7,10 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 export default function LoginScreen({ navigation, onLogin }) {
   const [username, setUsername] = useState('');
@@ -30,7 +32,7 @@ export default function LoginScreen({ navigation, onLogin }) {
   };
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.gradient}>
+    <LinearGradient colors={['#000000', '#cfb991']} style={styles.gradient}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -38,7 +40,11 @@ export default function LoginScreen({ navigation, onLogin }) {
         <View style={styles.content}>
           <View style={styles.card}>
             <View style={styles.header}>
-              <Text style={styles.emoji}>🎨</Text>
+              <Image
+                source={require('../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
               <Text style={styles.title}>Purdue Arts Tracker</Text>
               <Text style={styles.subtitle}>Track your creative hobbies & earn stars</Text>
             </View>
@@ -71,7 +77,7 @@ export default function LoginScreen({ navigation, onLogin }) {
 
             <TouchableOpacity style={styles.button} onPress={handleSubmit}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={['#cfb991', '#daaa00']}
                 style={styles.buttonGradient}
               >
                 <Text style={styles.buttonText}>Confirm</Text>
@@ -121,10 +127,15 @@ const styles = StyleSheet.create({
     fontSize: 48,
     marginBottom: 10,
   },
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 10,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#667eea',
+    color: '#cfb991',
     marginBottom: 5,
   },
   subtitle: {
@@ -189,7 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: '#667eea',
+    color: '#cfb991',
     fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',

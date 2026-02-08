@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Animated,
   SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BottomNav from '../components/BottomNav';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import BottomNav from '../components/BottomNav';
+import * as Haptics from 'expo-haptics';
+
 const BADGES = [
   {
     id: 'first-activity',
@@ -48,8 +51,16 @@ export default function ProfileScreen({ user, onLogout }) {
   const [badges, setBadges] = useState([]);
   const [totalStars, setTotalStars] = useState(0);
   const [loading, setLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     loadProfile();
+
+  // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   const loadProfile = async () => {
@@ -103,19 +114,27 @@ export default function ProfileScreen({ user, onLogout }) {
   }
   };
 
-  const isBadgeEarned = (badgeId) => badges.includes(badgeId);
+  const isBadgeEarned = (badgeId) =>
+    badges.some((badge) => badge.id === badgeId);
+
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            onLogout();
+          }}
+        >
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           <View style={styles.profileCard}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -141,14 +160,14 @@ export default function ProfileScreen({ user, onLogout }) {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Badges</Text>
-            {badges.map((badge) => {
+            {BADGES.map((badge) => {
               const earned = isBadgeEarned(badge.id);
               return (
                 <View
                   key={badge.id}
-                  style={[styles.badgeCard, true && styles.badgeEarned]}
+                  style={[styles.badgeCard, earned && styles.badgeEarned]}
                 >
-                  <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                  <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
                   <View style={styles.badgeInfo}>
                     <Text style={styles.badgeName}>{badge.name}</Text>
                     <Text style={styles.badgeDescription}>{badge.description}</Text>
@@ -157,7 +176,7 @@ export default function ProfileScreen({ user, onLogout }) {
               );
             })}
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
       <BottomNav />
     </SafeAreaView>
@@ -218,7 +237,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#667eea',
+    backgroundColor: '#cfb991',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
@@ -239,7 +258,7 @@ const styles = StyleSheet.create({
   },
   username: {
     fontSize: 16,
-    color: '#667eea',
+    color: '#cfb991',
     fontWeight: '600',
   },
   section: {
@@ -270,7 +289,7 @@ const styles = StyleSheet.create({
   starCount: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#667eea',
+    color: '#cfb991',
   },
   badgeCard: {
     backgroundColor: '#f9f9f9',
@@ -284,9 +303,9 @@ const styles = StyleSheet.create({
   badgeEarned: {
     backgroundColor: '#fff5e6',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#daaa00',
     opacity: 1,
-    shadowColor: '#FFD700',
+    shadowColor: '#daaa00',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

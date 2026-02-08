@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomNav from '../components/BottomNav';
+import * as Haptics from 'expo-haptics';
 
 export default function LogActivityScreen({ navigation, onActivityLogged }) {
   const [activityName, setActivityName] = useState('');
@@ -70,15 +71,20 @@ export default function LogActivityScreen({ navigation, onActivityLogged }) {
             </View>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
-
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-              <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.buttonGradient}
-              >
-                <Text style={styles.buttonText}>Confirm</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              await handleSubmit();
+            }}
+          >
+            <LinearGradient
+              colors={['#cfb991', '#daaa00']}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>Confirm</Text>
+            </LinearGradient>
+          </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>

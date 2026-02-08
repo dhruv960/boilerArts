@@ -8,8 +8,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 export default function SignUpScreen({ navigation, onSignUp }) {
   const [formData, setFormData] = useState({
@@ -47,7 +49,7 @@ export default function SignUpScreen({ navigation, onSignUp }) {
   };
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.gradient}>
+    <LinearGradient colors={['#000000', '#cfb991']} style={styles.gradient}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -58,8 +60,12 @@ export default function SignUpScreen({ navigation, onSignUp }) {
         >
           <View style={styles.card}>
             <View style={styles.header}>
-              <Text style={styles.emoji}>🎨</Text>
-              <Text style={styles.title}>Purdue Arts Tracker</Text>
+              <Image
+                source={require('../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <Text style={styles.title}>Hammer & Brush</Text>
               <Text style={styles.subtitle}>Track your creative hobbies & earn stars</Text>
             </View>
 
@@ -100,7 +106,7 @@ export default function SignUpScreen({ navigation, onSignUp }) {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
                 style={styles.input}
                 placeholder="johndoe"
@@ -123,9 +129,13 @@ export default function SignUpScreen({ navigation, onSignUp }) {
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            <TouchableOpacity style={styles.button} onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleSubmit();
+            }}
+            >
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={['#cfb991', '#daaa00']}
                 style={styles.buttonGradient}
               >
                 <Text style={styles.buttonText}>Confirm</Text>
@@ -175,10 +185,15 @@ const styles = StyleSheet.create({
     fontSize: 48,
     marginBottom: 10,
   },
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 10,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#667eea',
+    color: '#cfb991',
     marginBottom: 5,
   },
   subtitle: {
@@ -249,7 +264,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: '#667eea',
+    color: '#cfb991',
     fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',

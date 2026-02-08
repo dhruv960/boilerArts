@@ -81,7 +81,7 @@ export default function LogsScreen({ user }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#667eea" />
+        <ActivityIndicator size="large" color="#cfb991" />
         <Text style={styles.loadingText}>Loading your stats...</Text>
       </View>
     );
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   starsCard: {
-    backgroundColor: '#667eea',
+    backgroundColor: '#cfb991',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   bar: {
     height: 30,
-    backgroundColor: '#667eea',
+    backgroundColor: '#cfb991',
     borderRadius: 6,
     minWidth: 40,
   },
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#667eea',
+    color: '#cfb991',
   },
   emptyState: {
     backgroundColor: '#fff',

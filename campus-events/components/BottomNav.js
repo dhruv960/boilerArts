@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 
 export default function BottomNav() {
   const navigation = useNavigation();
@@ -12,7 +13,10 @@ export default function BottomNav() {
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.navButton}
-        onPress={() => navigation.navigate('Home')}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('Home');
+        }}
       >
         <Text style={[styles.icon, isActive('Home') && styles.activeIcon]}>
           🏠
@@ -24,7 +28,10 @@ export default function BottomNav() {
 
       <TouchableOpacity
         style={styles.navButton}
-        onPress={() => navigation.navigate('LogActivity')}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('LogActivity');
+        }}
       >
         <Text style={[styles.icon, isActive('LogActivity') && styles.activeIcon]}>
           ➕
@@ -36,7 +43,10 @@ export default function BottomNav() {
 
       <TouchableOpacity
         style={styles.navButton}
-        onPress={() => navigation.navigate('Logs')}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('Logs');
+        }}
       >
         <Text style={[styles.icon, isActive('Logs') && styles.activeIcon]}>
           📊
@@ -48,7 +58,10 @@ export default function BottomNav() {
 
       <TouchableOpacity
         style={styles.navButton}
-        onPress={() => navigation.navigate('Profile')}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('Profile');
+        }}
       >
         <Text style={[styles.icon, isActive('Profile') && styles.activeIcon]}>
           👤
@@ -95,6 +108,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeLabel: {
-    color: '#667eea',
+    color: '#cfb991',
   },
 });

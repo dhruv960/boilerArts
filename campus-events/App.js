@@ -115,7 +115,7 @@ export default function App() {
   }
   };
 
-  const handleLogin = async (username, password) => {
+  const handleLogin = async (email, password) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       return { success: true };

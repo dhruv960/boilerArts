@@ -27,7 +27,7 @@ export default function StarsEarnedScreen({ navigation, stars }) {
   }, []);
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.container}>
+    <LinearGradient colors={['#cfb991', '#daaa00']} style={styles.container}>
       <View style={styles.content}>
         <Animated.View style={[styles.starContainer, { transform: [{ scale: scaleAnim }] }]}>
           <Text style={styles.bigStar}>⭐</Text>
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   buttonText: {
-    color: '#667eea',
+    color: '#cfb991',
     fontSize: 18,
     fontWeight: '600',
   },

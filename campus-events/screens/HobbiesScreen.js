@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 const HOBBIES_LIST = [
   { id: 'painting', name: 'Painting', icon: '🎨' },
@@ -29,6 +30,7 @@ export default function HobbiesScreen({ navigation, onComplete }) {
   const [error, setError] = useState('');
 
   const toggleHobby = (hobbyId) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (selectedHobbies.includes(hobbyId)) {
       setSelectedHobbies(selectedHobbies.filter((id) => id !== hobbyId));
     } else {
@@ -48,7 +50,7 @@ export default function HobbiesScreen({ navigation, onComplete }) {
   };
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.gradient}>
+    <LinearGradient colors={['#000000', '#cfb991']} style={styles.gradient}>
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -89,7 +91,13 @@ export default function HobbiesScreen({ navigation, onComplete }) {
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <TouchableOpacity style={styles.button} onPress={handleConfirm}>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleConfirm();
+            }}
+          >
             <View style={styles.buttonInner}>
               <Text style={styles.buttonText}>Confirm</Text>
             </View>
@@ -161,7 +169,7 @@ const styles = StyleSheet.create({
   },
   selectedCard: {
     backgroundColor: '#fff',
-    borderColor: '#FFD700',
+    borderColor: '#daaa00',
     borderWidth: 3,
   },
   hobbyIcon: {
@@ -178,7 +186,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#667eea',
+    backgroundColor: '#cfb991',
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -209,7 +217,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: '#667eea',
+    color: '#cfb991',
     fontSize: 18,
     fontWeight: '600',
   },

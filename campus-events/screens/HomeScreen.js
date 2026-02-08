@@ -1,12 +1,10 @@
-
-import { doc, collection, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase'; // Adjust path if needed
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  Animated,
   SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -38,86 +36,73 @@ const SAMPLE_EVENTS = [
 
 export default function HomeScreen({ user }) {
   const [starsThisWeek, setStarsThisWeek] = useState(0);
-  const [events, setEvents] = useState([]);
-const [loading, setLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  
   useEffect(() => {
     loadStars();
-	fetchEvents();
+
+    // Fade in animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
-   const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        const eventsRef = collection(db, 'events');
-        const q = query(eventsRef, orderBy('date', 'asc')); // Sort by date
-        
-        const querySnapshot = await getDocs(q);
-        const eventsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        setEvents(eventsData);
-        console.log('Fetched events:', eventsData);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-      } finally {
-        setLoading(false);
-      }
-   }; 
+
   const loadStars = async () => {
-     try {
-    // Get activities array from Firestore user document
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    
-    if (!userDoc.exists()) {
-      console.log('User document not found');
-      return;
+    try {
+      const activitiesJson = await AsyncStorage.getItem(`activities_${user.username}`);
+      const activities = activitiesJson ? JSON.parse(activitiesJson) : [];
+
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const weeklyStars = activities
+        .filter((activity) => new Date(activity.date) >= startOfWeek)
+        .reduce((sum, activity) => sum + activity.stars, 0);
+
+      setStarsThisWeek(weeklyStars);
+    } catch (error) {
+      console.error('Error loading stars:', error);
     }
-    
-    const userData = userDoc.data();
-    const activities = userData.activities || [];
-    
-    console.log('Loaded activities from Firebase:', activities);
-
-    // Calculate start of week
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    // Filter activities from this week and sum stars
-    const weeklyStars = activities
-      .filter((activity) => {
-        const activityDate = new Date(activity.createdAt);
-        return activityDate >= startOfWeek;
-      })
-      .reduce((sum, activity) => sum + (activity.stars || 0), 0);
-
-    console.log('Stars this week:', weeklyStars);
-    setStarsThisWeek(weeklyStars);
-  } catch (error) {
-    console.error('Error loading stars:', error);
-  }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <Text style={styles.greeting}>Welcome back, {user.firstName}! 👋</Text>
+        <Animated.View 
+          style={[
+            styles.content,
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }] 
+            }
+          ]}
+        >
+        <Text style={styles.greeting}>Welcome back, {user.firstName}! 👋</Text>
 
-          <LinearGradient colors={['#667eea', '#764ba2']} style={styles.starsBox}>
-            <Text style={styles.starIcon}>⭐</Text>
-            <View style={styles.starsInfo}>
-              <Text style={styles.starsTitle}>Stars Earned This Week</Text>
-              <Text style={styles.starsCount}>{starsThisWeek}</Text>
-            </View>
-          </LinearGradient>
+          <LinearGradient colors={['#cfb991', '#daaa00']} style={styles.starsBox}>
+          <Text style={styles.starIcon}>⭐</Text>
+          <View style={styles.starsInfo}>
+            <Text style={styles.starsTitle}>Stars Earned This Week</Text>
+            <Text style={styles.starsCount}>{starsThisWeek}</Text>
+          </View>
+        </LinearGradient>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Upcoming Events</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Upcoming Events</Text>
 
-            {events.map((event) => (
+            {SAMPLE_EVENTS.map((event) => (
               <View key={event.id} style={styles.eventBox}>
                 <Text style={styles.eventIcon}>{event.icon}</Text>
                 <View style={styles.eventContent}>
@@ -144,7 +129,7 @@ const [loading, setLoading] = useState(true);
               </View>
             ))}
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
       <BottomNav />
     </SafeAreaView>
@@ -175,7 +160,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 25,
-    shadowColor: '#667eea',
+    shadowColor: '#cfb991',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -235,7 +220,7 @@ const styles = StyleSheet.create({
   },
   eventClub: {
     fontSize: 14,
-    color: '#667eea',
+    color: '#cfb991',
     fontWeight: '600',
     marginBottom: 12,
   },
