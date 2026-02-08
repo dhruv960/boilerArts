@@ -1,5 +1,4 @@
-# innovateHer_2026  
-## Hammer & Brush
+# Hammer & Brush
 
 College life is demanding, and for many students, creative hobbies become casualties of hectic schedules. One of our team members experienced this firsthand—she struggled to maintain her artistic pursuits amid academic pressures, finding it increasingly difficult to stay motivated.
 
